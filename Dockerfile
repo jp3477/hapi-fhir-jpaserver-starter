@@ -9,7 +9,18 @@ COPY server.xml .
 RUN mvn -ntp dependency:go-offline
 
 COPY src/ /tmp/hapi-fhir-jpaserver-starter/src/
-RUN mvn clean install -DskipTests -Djdk.lang.Process.launchMechanism=vfork
+
+####### Pull and install custom hapi-fhir
+WORKDIR /tmp/repos
+RUN git clone https://github.com/jp3477/hapi-fhir.git
+
+WORKDIR /tmp/repos/hapi-fhir
+RUN git checkout disable_display_validation
+RUN mvn clean install -DskipTests
+
+
+WORKDIR /tmp/hapi-fhir-jpaserver-starter
+RUN mvn clean install -nsu -DskipTests -Djdk.lang.Process.launchMechanism=vfork
 
 FROM build-hapi AS build-distroless
 RUN mvn package -DskipTests spring-boot:repackage -Pboot
